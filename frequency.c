@@ -23,8 +23,8 @@ int main() {
     data = malloc(sizeof(Letter) * SIZE);
     create_letter_array(data);
 
-    read_file("test.txt", data);
-    write_file("output.txt", data, SIZE);
+    read_file("test1.txt", data);
+    write_file("frequency.txt", data, SIZE);
     read_frequencies("output.txt");
 
     free(data);
