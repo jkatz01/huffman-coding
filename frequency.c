@@ -15,6 +15,9 @@ void add_letter(Letter *data, char c);
 void create_letter_array(Letter *data);
 void write_file(char *filename, Letter *data, int size);
 char verify_char(char c);
+void read_frequencies(char *filename);
+
+
 int main() {
     Letter *data;
     data = malloc(sizeof(Letter) * SIZE);
@@ -22,6 +25,7 @@ int main() {
 
     read_file("test.txt", data);
     write_file("output.txt", data, SIZE);
+    read_frequencies("output.txt");
 
     free(data);
     return 0.;
@@ -39,13 +43,13 @@ void read_file(char *filename, Letter *data) {
             add_letter(data, temp);
         }
     }
-    free(fp);
+    fclose(fp);
 }
 
 void add_letter(Letter *data, char c) {
     int i = 0;
     while(i < SIZE) {
-        if(data[i].letter = c) {
+        if(data[i].letter == c) {
             break;
         }
         i++;
@@ -70,10 +74,10 @@ void write_file(char *filename, Letter *data, int size) {
     fp = fopen(filename, "w");
 
     for(int i = 0; i < size; i++) {
-        printf("%c:%d\n", data[i].letter, data[i].frequency);
+        fprintf(fp, "%c:%d\n", data[i].letter, data[i].frequency);
     }
 
-    free(fp);
+    fclose(fp);
 }
 
 char verify_char(char c) {
@@ -95,4 +99,18 @@ char verify_char(char c) {
         temp = 0;
     }
     return temp;
+}
+
+void read_frequencies(char *filename) {
+    FILE *fp;
+    fp = fopen(filename, "r");
+
+    char line[32];
+    char *ptr;
+    while (fgets(line, 32, fp) != NULL) {
+        ptr = &line[2];
+        printf("%c:%d", line[0], atoi(ptr));
+    }
+    
+    fclose(fp);
 }
