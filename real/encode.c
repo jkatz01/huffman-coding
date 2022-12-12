@@ -69,7 +69,7 @@ int main() {
     data = malloc(sizeof(Letter) * SIZE);
     create_letter_array(data);
 
-    read_file("test.txt", data);
+    read_file("test1.txt", data);
     write_file("frequency.txt", data, SIZE);
     read_frequencies("frequency.txt");
 
@@ -87,7 +87,7 @@ int main() {
     create_code_array(codes);
     read_codes(codes, "codes.txt");
     
-    generate_compressed_file("test.txt", "output.bin", codes);
+    generate_compressed_file("test1.txt", "output.bin", codes);
     free(data);
     return 0;
 }
@@ -123,7 +123,9 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data) {
                         temp = strtol(ptr, 0, 2);
                         chr = temp;
                         printf("%s = %c = %d = 0x%.2X\n", ptr, chr, chr, chr);
-                        fwrite(&chr, sizeof(chr), 1, fw);
+                        //int size = fwrite(&chr, sizeof(chr), 1, fw);
+                        //printf("wrote %d lines to file", size);
+                        fputc((int)chr, fw);
                         memset(line, '\0', 100);
                     }
                     i++;
@@ -133,7 +135,8 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data) {
             //fprintf(fw, "%s", get_code(data, temp));
         }
         else {
-            c = fgetc(fp);
+            //c = fgetc(fp);
+            ;
         }
         //printf("woo");
     }
