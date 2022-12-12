@@ -20,7 +20,7 @@ typedef struct letter {
 
 typedef struct code {
     char letter;
-    char code[CODESIZE];
+    char *code;
 } Code;
 
 typedef struct node {
@@ -61,6 +61,7 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data);
 void create_code_array(Code *data);
 void add_code(Code *data, char c, char *code);
 void read_codes(Code *data, char *filename);
+char *get_code(Code *data, char c);
 
 int main() {
     //create letter frequency data and chart
@@ -68,7 +69,7 @@ int main() {
     data = malloc(sizeof(Letter) * SIZE);
     create_letter_array(data);
 
-    read_file("test1.txt", data);
+    read_file("test.txt", data);
     write_file("frequency.txt", data, SIZE);
     read_frequencies("frequency.txt");
 
@@ -94,7 +95,8 @@ int main() {
 void generate_compressed_file(char *file_in, char *file_out, Code *data) {
     FILE *fp;
     fp = fopen(file_in, "r");
-    printf("reading file: ");
+    FILE *fw;
+    fw = fopen(file_out, "wb");
 
     fseek(fp, 0, SEEK_END);
     long file_size = ftell(fp);
@@ -114,11 +116,58 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data) {
             i++;
         }
     }
-    printf("buffer size: %d, buffer: %s\n", file_size, buffer);
-    //FILE *fw;
-    //fw = fopen(file_out, "wb");
+    //printf("buffer size: %d, buffer: %s\n", file_size, buffer);
+    int buffer_size = strlen(buffer);
+
+    //we have to convert buffer to the code
+    remove("temp.txt");
+    FILE *tempfile;
+    tempfile = fopen("temp.txt", "w");
+    i = 0;
+    for(i; i < file_size; i++) {
+        //this goes for every character in the NORMAL BUFFER
+        temp = buffer[i];
+        fprintf(tempfile, "%s", get_code(data, temp));
+    }
+    
+    int j = 0;
+    fseek(tempfile, 0, SEEK_END);
+    long temp_file_size = ftell(tempfile);
+    fseek(tempfile, 0, SEEK_SET);
+
+    //this part will print 0/1 string to chars
+    char *bin_buffer = malloc(temp_file_size);
+    fread(bin_buffer, temp_file_size, 1, tempfile);
+    char *ptr = malloc(sizeof(char));
+    while(j < temp_file_size) {
+        if(j % 8 == 0) {
+            memcpy(ptr, bin_buffer + j, 8);
+            c = strtol(ptr, 0, 2);
+            printf("%s = %c = %d = 0x%.2X\n", ptr, c, c, c);
+        }
+        j++;
+    }
+
+    /*char line[8];
+    int j = 0;
+    int k = 0;
+    while((c = fgetc(tempfile)) != EOF) {
+        line[k] = c;
+        if(j % 8 == 0) {
+            c = strtol(line, 0, 2);
+            printf("%s = %c = %d = 0x%.2X\n", line, c, c, c);
+            fputc((int)c, fw);
+            k = 0;
+        }
+        k++;
+        j++;
+    }*/
+
+
     free(buffer);
+    fclose(tempfile);
     fclose(fp);
+    fclose(fw);
 }
 
 void read_file(char *filename, Letter *data) {
@@ -363,7 +412,9 @@ void add_code(Code *data, char c, char *code) {
         printf("Error: incorrect character passed\n");
         return;
     }
-    memcpy(data[i].code, code, CODESIZE);
+    data[i].code = malloc(strlen(code));
+    code[strlen(code)-1] = '\0';
+    memcpy(data[i].code, code, strlen(code));
 }
 
 void read_codes(Code *data, char *filename) {
@@ -376,5 +427,22 @@ void read_codes(Code *data, char *filename) {
         ptr = &line[2];
         add_code(data, line[0], ptr);
     }
+    printf("\n\n");
     fclose(fp);
+}
+
+char *get_code(Code *data, char c) {
+    int i = 0;
+    while(i < SIZE) {
+        if(data[i].letter == c) {
+            break;
+        }
+        i++;
+    }
+    if(i > SIZE) {
+        printf("Error: incorrect character passed\n");
+        return "fail: letter doesnt exist\n";
+    }
+    char *temp = data[i].code;
+    return temp;
 }
