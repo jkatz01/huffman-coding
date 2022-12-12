@@ -87,7 +87,7 @@ int main() {
     create_code_array(codes);
     read_codes(codes, "codes.txt");
     
-    generate_compressed_file("test1.txt", "output.bin", codes);
+    generate_compressed_file("test.txt", "output.bin", codes);
     free(data);
     return 0;
 }
@@ -95,77 +95,49 @@ int main() {
 void generate_compressed_file(char *file_in, char *file_out, Code *data) {
     FILE *fp;
     fp = fopen(file_in, "r");
+
     FILE *fw;
     fw = fopen(file_out, "wb");
 
-    fseek(fp, 0, SEEK_END);
-    long file_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-
-    char *buffer = malloc(file_size);
-    memset(buffer, 0, file_size);
-
-    char c;
-    char temp;
+    unsigned char c;
+    unsigned char temp;
     int i = 0;
+    int code_len;
+    char line[100];
+    char *ptr = malloc(sizeof(char));
+    unsigned char chr;
+
     while((c = fgetc(fp)) != EOF) {
         temp = verify_char(c);
         if (temp != 0) {
             //add to buffer
-            buffer[i] = temp;
-            i++;
+            //printf("%c", temp);
+            //printf("%s", get_code(data, temp));
+            code_len = strlen(get_code(data, temp));
+            strcat(line, get_code(data, temp));
+            if(strlen(line) % 8 == 0) {
+                i = 0;
+                while(i < strlen(line)) {
+                    if(i % 8 == 0) {
+                        memcpy(ptr, line + i, 8);
+                        temp = strtol(ptr, 0, 2);
+                        chr = temp;
+                        printf("%s = %c = %d = 0x%.2X\n", ptr, chr, chr, chr);
+                        fwrite(&chr, sizeof(chr), 1, fw);
+                        memset(line, '\0', 100);
+                    }
+                    i++;
+                    //printf("wa");
+                }
+            }
+            //fprintf(fw, "%s", get_code(data, temp));
         }
-    }
-    //printf("buffer size: %d, buffer: %s\n", file_size, buffer);
-    int buffer_size = strlen(buffer);
-
-    //we have to convert buffer to the code
-    remove("temp.txt");
-    FILE *tempfile;
-    tempfile = fopen("temp.txt", "w");
-    i = 0;
-    for(i; i < file_size; i++) {
-        //this goes for every character in the NORMAL BUFFER
-        temp = buffer[i];
-        fprintf(tempfile, "%s", get_code(data, temp));
+        else {
+            c = fgetc(fp);
+        }
+        //printf("woo");
     }
     
-    int j = 0;
-    fseek(tempfile, 0, SEEK_END);
-    long temp_file_size = ftell(tempfile);
-    fseek(tempfile, 0, SEEK_SET);
-
-    //this part will print 0/1 string to chars
-    char *bin_buffer = malloc(temp_file_size);
-    fread(bin_buffer, temp_file_size, 1, tempfile);
-    char *ptr = malloc(sizeof(char));
-    while(j < temp_file_size) {
-        if(j % 8 == 0) {
-            memcpy(ptr, bin_buffer + j, 8);
-            c = strtol(ptr, 0, 2);
-            printf("%s = %c = %d = 0x%.2X\n", ptr, c, c, c);
-        }
-        j++;
-    }
-
-    /*char line[8];
-    int j = 0;
-    int k = 0;
-    while((c = fgetc(tempfile)) != EOF) {
-        line[k] = c;
-        if(j % 8 == 0) {
-            c = strtol(line, 0, 2);
-            printf("%s = %c = %d = 0x%.2X\n", line, c, c, c);
-            fputc((int)c, fw);
-            k = 0;
-        }
-        k++;
-        j++;
-    }*/
-
-
-    free(buffer);
-    fclose(tempfile);
     fclose(fp);
     fclose(fw);
 }
