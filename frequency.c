@@ -25,7 +25,7 @@ int main() {
 
     read_file("test1.txt", data);
     write_file("frequency.txt", data, SIZE);
-    read_frequencies("output.txt");
+    read_frequencies("frequency.txt");
 
     free(data);
     return 0.;
