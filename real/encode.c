@@ -104,6 +104,7 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data) {
     int i = 0;
     int code_len;
     char line[100];
+    char *plop = malloc(sizeof(char) * 8);
     char *ptr = malloc(sizeof(char));
     unsigned char chr;
 
@@ -119,8 +120,9 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data) {
                 i = 0;
                 while(i < strlen(line)) {
                     if(i % 8 == 0) {
-                        memcpy(ptr, line + i, 8);
-                        temp = strtol(ptr, 0, 2);
+                        memcpy(plop, line + i, 8);
+                        temp = strtol(plop, 0, 2);
+                        //temp = atoi(plop);
                         chr = temp;
                         printf("%s = %c = %d = 0x%.2X\n", ptr, chr, chr, chr);
                         //int size = fwrite(&chr, sizeof(chr), 1, fw);
