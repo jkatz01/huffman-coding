@@ -107,17 +107,14 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data) {
     char line[100];
     char *plop = malloc(sizeof(char) * 9);
     char *ptr = malloc(sizeof(char));
-    unsigned int chr;
+    char chr;
+    int size;
 
     //fprintf(fw, "WHYYYYYY");
-
     while((c = fgetc(fp)) != EOF) {
         chr = verify_char(c);
         if (chr != 0) {
-            //add to buffer
-            //printf("%c", temp);
-            //printf("%s", get_code(data, temp));
-            code_len = strlen(get_code(data, chr));
+            code_len = strlen(get_code(data, chr)); //error with get_code??
             strcat(line, get_code(data, chr));
             printf("strlen line %d: \n", strlen(line));
             if(strlen(line) % 8 == 0) {
@@ -125,20 +122,14 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data) {
                 i = 0;
                 while(i < strlen(line)) {
                     if(i % 8 == 0) {
-                        /*
-                        memcpy(plop, line + i, 8);
-                        chr = strtol(plop, 0, 2);
-                        printf("%s = %c = %d = 0x%.2X\n", ptr, chr, chr, chr);
-                        //fprintf(fw, "%c", chr);
-                        int size = fwrite(&chr, sizeof(chr), 1, fw);
-                        memset(line, '\0', 100);
-                        */
-                       memcpy(plop, (&line[0] + i), 8);
+                       memcpy(plop, (&line[0] + i*sizeof(char)), 8);
                        chr = strtol(plop, 0, 2);
                        printf("printed 1 8bit section of the line: %s---\n", plop);
+                       size = fwrite(&chr, sizeof(chr), 1, fw);
                     }
                     i++;
                 }
+                memset(line, '\0', 100);
             }
         }
         else {
@@ -409,6 +400,7 @@ void read_codes(Code *data, char *filename) {
     while (fgets(line, sizeof(line), fp) != NULL) {
         ptr = &line[2];
         add_code(data, line[0], ptr);
+        //printf("Added char: %c with code: %s\n", line[0], ptr);
     }
     printf("\n\n");
     fclose(fp);
@@ -427,5 +419,6 @@ char *get_code(Code *data, char c) {
         return "fail: letter doesnt exist\n";
     }
     char *temp = data[i].code;
+    //printf("\n--- char: %c --- code: %s --- strlen: %d\n", c, temp, strlen(temp));
     return temp;
 }
