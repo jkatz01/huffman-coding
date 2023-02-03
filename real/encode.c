@@ -92,6 +92,7 @@ int main() {
     return 0;
 }
 
+
 void generate_compressed_file(char *file_in, char *file_out, Code *data) {
     FILE *fp;
     fp = fopen(file_in, "r");
@@ -104,44 +105,49 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data) {
     int i = 0;
     int code_len;
     char line[100];
-    char *plop = malloc(sizeof(char) * 8);
+    char *plop = malloc(sizeof(char) * 9);
     char *ptr = malloc(sizeof(char));
-    unsigned char chr;
+    unsigned int chr;
+
+    //fprintf(fw, "WHYYYYYY");
 
     while((c = fgetc(fp)) != EOF) {
-        temp = verify_char(c);
-        if (temp != 0) {
+        chr = verify_char(c);
+        if (chr != 0) {
             //add to buffer
             //printf("%c", temp);
             //printf("%s", get_code(data, temp));
-            code_len = strlen(get_code(data, temp));
-            strcat(line, get_code(data, temp));
+            code_len = strlen(get_code(data, chr));
+            strcat(line, get_code(data, chr));
+            printf("strlen line %d: \n", strlen(line));
             if(strlen(line) % 8 == 0) {
+                printf("line: ----%s----\n", line);
                 i = 0;
                 while(i < strlen(line)) {
                     if(i % 8 == 0) {
+                        /*
                         memcpy(plop, line + i, 8);
-                        temp = strtol(plop, 0, 2);
-                        //temp = atoi(plop);
-                        chr = temp;
+                        chr = strtol(plop, 0, 2);
                         printf("%s = %c = %d = 0x%.2X\n", ptr, chr, chr, chr);
-                        //int size = fwrite(&chr, sizeof(chr), 1, fw);
-                        //printf("wrote %d lines to file", size);
-                        fputc((int)chr, fw);
+                        //fprintf(fw, "%c", chr);
+                        int size = fwrite(&chr, sizeof(chr), 1, fw);
                         memset(line, '\0', 100);
+                        */
+                       memcpy(plop, (&line[0] + i), 8);
+                       chr = strtol(plop, 0, 2);
+                       printf("printed 1 8bit section of the line: %s---\n", plop);
                     }
                     i++;
-                    //printf("wa");
                 }
             }
-            //fprintf(fw, "%s", get_code(data, temp));
         }
         else {
-            //c = fgetc(fp);
             ;
         }
-        //printf("woo");
-    }
+        if( feof(fp) ) { 
+            break;
+        }
+    } 
     
     fclose(fp);
     fclose(fw);
