@@ -89,6 +89,7 @@ int main() {
     
     generate_compressed_file("test1.txt", "output.bin", codes);
     free(data);
+    free(codes);
     return 0;
 }
 
@@ -105,18 +106,22 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data) {
     int i = 0;
     int code_len;
     char line[100];
-    char *plop = malloc(sizeof(char) * 9);
+    char *plop = malloc(sizeof(char) * 9); 
     char *ptr = malloc(sizeof(char));
     char chr;
     int size;
 
     //fprintf(fw, "WHYYYYYY");
+    //can determine size using the letter frequencies.
+    memset(line, '\0', 100);
     while((c = fgetc(fp)) != EOF) {
         chr = verify_char(c);
         if (chr != 0) {
             code_len = strlen(get_code(data, chr)); //error with get_code??
-            strcat(line, get_code(data, chr));
+            //bug happens when reading a whitespace?
+            strncat(line, get_code(data, chr), code_len);
             printf("strlen line %d: \n", strlen(line));
+            printf("letter code: %s\n", get_code(data, chr));
             if(strlen(line) % 8 == 0) {
                 printf("line: ----%s----\n", line);
                 i = 0;
@@ -125,7 +130,7 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data) {
                        memcpy(plop, (&line[0] + i*sizeof(char)), 8);
                        chr = strtol(plop, 0, 2);
                        printf("printed 1 8bit section of the line: %s---\n", plop);
-                       size = fwrite(&chr, sizeof(chr), 1, fw);
+                       size = fwrite(&chr, sizeof(char), 1, fw);
                     }
                     i++;
                 }
@@ -222,7 +227,7 @@ void read_frequencies(char *filename) {
     char *ptr;
     while (fgets(line, 32, fp) != NULL) {
         ptr = &line[2];
-        //printf("%c:%d", line[0], atoi(ptr));
+        printf("%c:%d", line[0], atoi(ptr));
     }
     
     fclose(fp);

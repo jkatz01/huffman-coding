@@ -15,5 +15,9 @@ int main() {
     fw = fopen("output.bin", "rb");
     fread(buffer, sizeof(char), 100, fw);
     printf("%s", buffer);
+
+    //read heap tree
+    //call read_binary_string from codes.c
+
     return 0;
 }
