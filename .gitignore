@@ -1,4 +1,6 @@
 *.exe
+codes.txt
+frequency.txt
 *.bin
 .vscode
 .json
