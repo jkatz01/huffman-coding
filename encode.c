@@ -98,6 +98,7 @@ int main() {
     printf("Total number of bits: %ld\n", total_bits);
     
     generate_compressed_file("test1.txt", "output.bin", codes, total_bits);
+
     free(data);
     free(codes);
     return 0;
@@ -195,6 +196,7 @@ long total_num_of_bits(Letter data[], Code *codes) {
     }
     return sum;
 }
+
 
 void read_file(char *filename, Letter *data) {
     FILE *fp;

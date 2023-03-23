@@ -1,8 +1,3 @@
 # huffman-coding
-Really not close to working. lol
+Program for lossy encoding and decoding of a text file.
 
-
-## build
-- cd to /real
-- compile with gcc encode.c -o encode
-- run with ./encode
