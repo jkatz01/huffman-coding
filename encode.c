@@ -59,15 +59,16 @@ MinHeap *create_heap(Letter data[], int size);
 Node *build_huff_tree(Letter data[], int size);
 void print_codes(FILE *fp, Node *root, int codes[], int start);
 //encoding
-void generate_compressed_file(char *file_in, char *file_out, Code *data);
+void generate_compressed_file(char *file_in, char *file_out, Code *data, long size);
 void create_code_array(Code *data);
 void add_code(Code *data, char c, char *code);
 void read_codes(Code *data, char *filename);
 char *get_code(Code *data, char c);
 //bit writing
-void write_bit(uint32_t digit);
-uint8_t print_bit();
+void write_bit(uint32_t digit, FILE *output);
+uint8_t print_bit(FILE *output);
 void flush_remaining_bits();
+long total_num_of_bits(Letter data[], Code *codes);
 
 int main() {
     //create letter frequency data and chart
@@ -78,7 +79,6 @@ int main() {
     read_file("test1.txt", data);
     write_file("frequency.txt", data, SIZE);
     read_frequencies("frequency.txt");
-
     //build the huffman tree
     Node *root = build_huff_tree(data, SIZE);
     int array[100];
@@ -92,8 +92,12 @@ int main() {
     codes = malloc(sizeof(Code) * SIZE);
     create_code_array(codes);
     read_codes(codes, "codes.txt");
+
+    //get size
+    long total_bits = total_num_of_bits(data, codes);
+    printf("Total number of bits: %ld\n", total_bits);
     
-    generate_compressed_file("test1.txt", "output.bin", codes);
+    generate_compressed_file("test1.txt", "output.bin", codes, total_bits);
     free(data);
     free(codes);
     return 0;
@@ -109,85 +113,57 @@ int main() {
 *       -> write the first 8 bits to file
 *       -> shift buffer 8 to the left
 */
-void generate_compressed_file(char *file_in, char *file_out, Code *data) {
-    FILE *fp;
+void generate_compressed_file(char *file_in, char *file_out, Code *data, long size) {
+    FILE *fp, *fw;
     fp = fopen(file_in, "r");
+    fw = fopen(file_out, "wb");
+
+    char read_c;
+    char temp_c;
+    char line[64];
+    int code_len, j, num;
+    int bits_remainder = size % 8;
+    int bit_count = 0;
+    //write number of bits to read at front of file
+    fwrite(&size, sizeof(size), 1, fw);
+    while((read_c = fgetc(fp)) != EOF) {
+        memset(line, '\0', 64);
+        code_len = strlen(get_code(data, read_c));
+        strncat(line, get_code(data, read_c), code_len);
+        printf("code_len: %d line: %s\n", code_len, line);
+        for (j = 0; j < code_len; j++) {
+            temp_c = line[j];
+            num = ((int) temp_c) - 48; //convert char to int
+            write_bit(num, fw);
+            bit_count++;
+        }
+        if (bit_count > (size - bits_remainder)) {
+            //less than 8 bits remaining
+            print_bit(fw);
+        }
+    }
+    fclose(fp);
+    fclose(fw);
 }
-
-
-// void generate_compressed_file(char *file_in, char *file_out, Code *data) {
-//     FILE *fp;
-//     fp = fopen(file_in, "r");
-
-//     FILE *fw;
-//     fw = fopen(file_out, "wb");
-
-//     unsigned char c;
-//     unsigned char temp;
-//     int i = 0;
-//     int code_len;
-//     char line[100];
-//     char *plop = malloc(sizeof(char) * 9); 
-//     char *ptr = malloc(sizeof(char));
-//     char chr;
-//     int size;
-
-//     //fprintf(fw, "WHYYYYYY");
-//     //can determine size using the letter frequencies.
-//     memset(line, '\0', 100);
-//     while((c = fgetc(fp)) != EOF) {
-//         chr = verify_char(c);
-//         if (chr != 0) {
-//             code_len = strlen(get_code(data, chr)); //error with get_code??
-//             //bug happens when reading a whitespace?
-//             strncat(line, get_code(data, chr), code_len);
-//             printf("strlen line %d: \n", strlen(line));
-//             printf("letter code: %s\n", get_code(data, chr));
-//             if(strlen(line) % 8 == 0) {
-//                 printf("line: ----%s----\n", line);
-//                 i = 0;
-//                 while(i < strlen(line)) {
-//                     if(i % 8 == 0) {
-//                        memcpy(plop, (&line[0] + i*sizeof(char)), 8);
-//                        chr = strtol(plop, 0, 2);
-//                        printf("printed 1 8bit section of the line: %s---\n", plop);
-//                        size = fwrite(&chr, sizeof(char), 1, fw);
-//                     }
-//                     i++;
-//                 }
-//                 memset(line, '\0', 100);
-//             }
-//         }
-//         else {
-//             ;
-//         }
-//         if( feof(fp) ) { 
-//             break;
-//         }
-//     } 
-    
-//     fclose(fp);
-//     fclose(fw);
-// }
 
 static uint32_t bit_buffer = 0;
 static int n_bits = 0;
 
-void write_bit(uint32_t digit) {
+void write_bit(uint32_t digit, FILE *output) {
     //returns 1 if 8 bits are ready to be written, 0 if they arent ready
     bit_buffer |= digit << (BIT_BUFFER_SIZE_1 - n_bits); // OR the digit into the right size of bit_buffer, shift left by 32 - number_of_bits_written
     n_bits++;
     uint8_t num;
     printf("bit buffer: %u\n", bit_buffer);
     if (n_bits == 8) {
-        num = print_bit();
+        num = print_bit(output);
     }
     else if (n_bits == BIT_BUFFER_SIZE_1) flush_remaining_bits(); // protection from overflow
 }
 
 // this function reads the 8 first bits of buffer and returns them
 // it also CLEARS the 8 bits in the buffer by shifting it left
-uint8_t print_bit() {
+uint8_t print_bit(FILE *output) {
     uint8_t encoded_number = 0;
     uint32_t buffer_copy = bit_buffer;
     encoded_number |= buffer_copy >> 24; // use OR to write the first 8 bits
@@ -195,6 +171,7 @@ uint8_t print_bit() {
     bit_buffer = bit_buffer << 8;
     printf("number to write: %u ", encoded_number);
     printf("char equivalent: %c\n", (char)encoded_number);
+    fwrite(&encoded_number, sizeof(encoded_number), 1, output);
     return encoded_number;
 }
 
@@ -205,6 +182,18 @@ void flush_remaining_bits() {
         bit_buffer = 0;
         n_bits = 0;
     }
+}
+
+long total_num_of_bits(Letter data[], Code *codes) {
+    long sum = 0;
+    char c;
+    int bits_of_letter;
+    for (int i = 0; i < SIZE; i++) {
+        c = data[i].letter;
+        bits_of_letter = data[i].frequency * strlen(get_code(codes, c));
+        sum += (long) bits_of_letter;
+    }
+    return sum;
 }
 
 void read_file(char *filename, Letter *data) {
@@ -285,7 +274,7 @@ void read_frequencies(char *filename) {
     char *ptr;
     while (fgets(line, 32, fp) != NULL) {
         ptr = &line[2];
-        printf("%c:%d", line[0], atoi(ptr));
+        //printf("%c:%d", line[0], atoi(ptr));
     }
     
     fclose(fp);
