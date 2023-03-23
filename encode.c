@@ -1,5 +1,4 @@
 /*
-Yehonatan Katz
 DEC 11 2022
 */
 #include <stdio.h>
@@ -93,61 +92,72 @@ int main() {
     return 0;
 }
 
+/* generate_compressed_file(filename_in, filename_out, Code *data)
+*  calculate the total number of bits using the letter frequencies
+*  calculate max code size
+*  create a buffer uint32
+*  read letter, add its code to the buffer using a custom putbit function
+*   -> if the code is < 7 keep it in the buffer
+*       -> add another letter code to the buffer
+*       -> write the first 8 bits to file
+*       -> shift buffer 8 to the left
+*/
 
-void generate_compressed_file(char *file_in, char *file_out, Code *data) {
-    FILE *fp;
-    fp = fopen(file_in, "r");
 
-    FILE *fw;
-    fw = fopen(file_out, "wb");
+// void generate_compressed_file(char *file_in, char *file_out, Code *data) {
+//     FILE *fp;
+//     fp = fopen(file_in, "r");
 
-    unsigned char c;
-    unsigned char temp;
-    int i = 0;
-    int code_len;
-    char line[100];
-    char *plop = malloc(sizeof(char) * 9); 
-    char *ptr = malloc(sizeof(char));
-    char chr;
-    int size;
+//     FILE *fw;
+//     fw = fopen(file_out, "wb");
 
-    //fprintf(fw, "WHYYYYYY");
-    //can determine size using the letter frequencies.
-    memset(line, '\0', 100);
-    while((c = fgetc(fp)) != EOF) {
-        chr = verify_char(c);
-        if (chr != 0) {
-            code_len = strlen(get_code(data, chr)); //error with get_code??
-            //bug happens when reading a whitespace?
-            strncat(line, get_code(data, chr), code_len);
-            printf("strlen line %d: \n", strlen(line));
-            printf("letter code: %s\n", get_code(data, chr));
-            if(strlen(line) % 8 == 0) {
-                printf("line: ----%s----\n", line);
-                i = 0;
-                while(i < strlen(line)) {
-                    if(i % 8 == 0) {
-                       memcpy(plop, (&line[0] + i*sizeof(char)), 8);
-                       chr = strtol(plop, 0, 2);
-                       printf("printed 1 8bit section of the line: %s---\n", plop);
-                       size = fwrite(&chr, sizeof(char), 1, fw);
-                    }
-                    i++;
-                }
-                memset(line, '\0', 100);
-            }
-        }
-        else {
-            ;
-        }
-        if( feof(fp) ) { 
-            break;
-        }
-    } 
+//     unsigned char c;
+//     unsigned char temp;
+//     int i = 0;
+//     int code_len;
+//     char line[100];
+//     char *plop = malloc(sizeof(char) * 9); 
+//     char *ptr = malloc(sizeof(char));
+//     char chr;
+//     int size;
+
+//     //fprintf(fw, "WHYYYYYY");
+//     //can determine size using the letter frequencies.
+//     memset(line, '\0', 100);
+//     while((c = fgetc(fp)) != EOF) {
+//         chr = verify_char(c);
+//         if (chr != 0) {
+//             code_len = strlen(get_code(data, chr)); //error with get_code??
+//             //bug happens when reading a whitespace?
+//             strncat(line, get_code(data, chr), code_len);
+//             printf("strlen line %d: \n", strlen(line));
+//             printf("letter code: %s\n", get_code(data, chr));
+//             if(strlen(line) % 8 == 0) {
+//                 printf("line: ----%s----\n", line);
+//                 i = 0;
+//                 while(i < strlen(line)) {
+//                     if(i % 8 == 0) {
+//                        memcpy(plop, (&line[0] + i*sizeof(char)), 8);
+//                        chr = strtol(plop, 0, 2);
+//                        printf("printed 1 8bit section of the line: %s---\n", plop);
+//                        size = fwrite(&chr, sizeof(char), 1, fw);
+//                     }
+//                     i++;
+//                 }
+//                 memset(line, '\0', 100);
+//             }
+//         }
+//         else {
+//             ;
+//         }
+//         if( feof(fp) ) { 
+//             break;
+//         }
+//     } 
     
-    fclose(fp);
-    fclose(fw);
-}
+//     fclose(fp);
+//     fclose(fw);
+// }
 
 void read_file(char *filename, Letter *data) {
     FILE *fp;
