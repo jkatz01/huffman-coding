@@ -52,7 +52,6 @@ void add_code(Code *data, char c, char *code);
 void read_codes(Code *data, char *filename);
 char *get_code(Code *data, char c);
 int read_binary_string(char letters[], Node *root, int size);
-void toBinary(uint8_t n, char *b_string);
 
 int main() {
     char buffer[100];
@@ -104,27 +103,21 @@ int main() {
     char test_str[9] = "";
     toBinary(test_c, test_str);
     puts(test_str);
-
-    return 0;
     */
-}
 
-
-void toBinary(uint8_t n, char *b_string)
-{
-    uint8_t i;
-    uint8_t temp;
-    char temp_str[9] = "00000000";
-    for(i=0;n>0;i++)    
-    {    
-        temp=n%2;    
-        n=n/2;
-        temp_str[i] = temp + '0';
-        //printf("%d", temp);
+    char binary_bits_string[bytes_num * 8];
+    char temp_buffer[33];
+    char temp_b_str[9];
+    for (int j = 0; j < bytes_num; j++) {
+        itoa(bits_buffer[j], temp_buffer, 2);
+        memcpy(temp_b_str, &temp_buffer[24], 8); //we need this because itoa returns a 32 bit integer but we want 8 bit
+        strncat(binary_bits_string, temp_b_str, 8);
     } 
-    temp_str[i] = '\0';
-    //printf("%s", temp_str);
-    strncat(b_string, temp_str, 9);
+    
+    printf("%.32s", binary_bits_string);
+    
+    read_binary_string(binary_bits_string, root, bits_num);
+    return 0;
 }
 
 Node *new_node(char let, int freq) {
