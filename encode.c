@@ -59,7 +59,7 @@ MinHeap *create_heap(Letter data[], int size);
 Node *build_huff_tree(Letter data[], int size);
 void print_codes(FILE *fp, Node *root, int codes[], int start);
 //encoding
-void generate_compressed_file(char *file_in, char *file_out, Code *data, long size);
+void generate_compressed_file(char *file_in, char *file_out, Code *data, long size, Letter *letter_array);
 void create_code_array(Code *data);
 void add_code(Code *data, char c, char *code);
 void read_codes(Code *data, char *filename);
@@ -79,6 +79,10 @@ int main() {
     read_file("test1.txt", data);
     write_file("frequency.txt", data, SIZE);
     read_frequencies("frequency.txt");
+
+    /*for (int b = 0; b < SIZE; b++) {
+        printf("%c: %i\n", data[b].letter, data[b].frequency);
+    }*/
     //build the huffman tree
     Node *root = build_huff_tree(data, SIZE);
     int array[100];
@@ -95,9 +99,9 @@ int main() {
 
     //get size
     long total_bits = total_num_of_bits(data, codes);
-    printf("Total number of bits: %ld\n", total_bits);
+    //printf("Total number of bits: %ld\n", total_bits);
     
-    generate_compressed_file("test1.txt", "output.bin", codes, total_bits);
+    generate_compressed_file("test1.txt", "output.bin", codes, total_bits, data);
 
     free(data);
     free(codes);
@@ -114,24 +118,25 @@ int main() {
 *       -> write the first 8 bits to file
 *       -> shift buffer 8 to the left
 */
-void generate_compressed_file(char *file_in, char *file_out, Code *data, long size) {
+void generate_compressed_file(char *file_in, char *file_out, Code *data, long size, Letter *letter_array) {
     FILE *fp, *fw;
     fp = fopen(file_in, "r");
     fw = fopen(file_out, "wb");
 
     char read_c;
     char temp_c;
-    char line[64];
+    char line[256];
     int code_len, j, num;
     int bits_remainder = size % 8;
     int bit_count = 0;
+    int letters_size = SIZE;
     //write number of bits to read at front of file
     fwrite(&size, sizeof(size), 1, fw);
     while((read_c = fgetc(fp)) != EOF) {
-        memset(line, '\0', 64);
+        memset(line, '\0', 256);
         code_len = strlen(get_code(data, read_c));
         strncat(line, get_code(data, read_c), code_len);
-        printf("code_len: %d line: %s\n", code_len, line);
+        //printf("code_len: %d line: %s\n", code_len, line);
         for (j = 0; j < code_len; j++) {
             temp_c = line[j];
             num = ((int) temp_c) - 48; //convert char to int
@@ -142,6 +147,12 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, long si
             //less than 8 bits remaining
             print_bit(fw);
         }
+    }
+    if (fwrite(&letters_size, sizeof(int), 1, fw) != 1) {
+        printf("fwrite failed\n");
+    }
+    if (fwrite(&letter_array, sizeof(Letter), letters_size, fw) != letters_size) {
+        printf("fwrite failed\n");
     }
     fclose(fp);
     fclose(fw);
@@ -155,7 +166,7 @@ void write_bit(uint32_t digit, FILE *output) {
     bit_buffer |= digit << (BIT_BUFFER_SIZE_1 - n_bits); // OR the digit into the right size of bit_buffer, shift left by 32 - number_of_bits_written
     n_bits++;
     uint8_t num;
-    printf("bit buffer: %u\n", bit_buffer);
+    //printf("bit buffer: %u\n", bit_buffer);
     if (n_bits == 8) {
         num = print_bit(output);
     }
@@ -170,8 +181,8 @@ uint8_t print_bit(FILE *output) {
     encoded_number |= buffer_copy >> 24; // use OR to write the first 8 bits
     n_bits -= 8;
     bit_buffer = bit_buffer << 8;
-    printf("number to write: %u ", encoded_number);
-    printf("char equivalent: %c\n", (char)encoded_number);
+    //printf("number to write: %u ", encoded_number);
+    //printf("char equivalent: %c\n", (char)encoded_number);
     fwrite(&encoded_number, sizeof(encoded_number), 1, output);
     return encoded_number;
 }
