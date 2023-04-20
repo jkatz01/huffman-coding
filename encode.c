@@ -121,7 +121,15 @@ int main() {
 void generate_compressed_file(char *file_in, char *file_out, Code *data, long size, Letter *letter_array) {
     FILE *fp, *fw;
     fp = fopen(file_in, "r");
+    if (fp == NULL){
+        printf("Error: file input cannot be opened\n");
+        exit(1);
+    }
     fw = fopen(file_out, "wb");
+    if (fw == NULL){
+        printf("Error: file output cannot be opened\n");
+        exit(1);
+    }
 
     char read_c;
     char temp_c;
@@ -148,12 +156,14 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, long si
             print_bit(fw);
         }
     }
+    /*
     if (fwrite(&letters_size, sizeof(int), 1, fw) != 1) {
         printf("fwrite failed\n");
     }
     if (fwrite(&letter_array, sizeof(Letter), letters_size, fw) != letters_size) {
         printf("fwrite failed\n");
-    }
+    }*/
+    
     fclose(fp);
     fclose(fw);
 }
@@ -183,7 +193,9 @@ uint8_t print_bit(FILE *output) {
     bit_buffer = bit_buffer << 8;
     //printf("number to write: %u ", encoded_number);
     //printf("char equivalent: %c\n", (char)encoded_number);
-    fwrite(&encoded_number, sizeof(encoded_number), 1, output);
+    if (fwrite(&encoded_number, sizeof(encoded_number), 1, output) != 1) {
+        printf("fwrite failed\n");
+    }
     return encoded_number;
 }
 
