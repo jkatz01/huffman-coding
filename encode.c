@@ -133,36 +133,49 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, long si
 
     char read_c;
     char temp_c;
-    char line[256];
+    char line[64];
     int code_len, j, num;
     int bits_remainder = size % 8;
     int bit_count = 0;
     int letters_size = SIZE;
     //write number of bits to read at front of file
     fwrite(&size, sizeof(size), 1, fw);
+    //write the total number of bytes to read
+    long num_bytes = (size / 8) + bits_remainder;
+    fwrite(&num_bytes, sizeof(num_bytes), 1, fw);
+
+    printf("bits: %ld, bytes: %ld", size, num_bytes);
+
     while((read_c = fgetc(fp)) != EOF) {
-        memset(line, '\0', 256);
-        code_len = strlen(get_code(data, read_c));
-        strncat(line, get_code(data, read_c), code_len);
-        //printf("code_len: %d line: %s\n", code_len, line);
-        for (j = 0; j < code_len; j++) {
-            temp_c = line[j];
-            num = ((int) temp_c) - 48; //convert char to int
-            write_bit(num, fw);
-            bit_count++;
+        memset(line, '\0', 64);
+        read_c = verify_char(read_c);
+        if (read_c != 0) {
+            code_len = strlen(get_code(data, read_c));
+            strncat(line, get_code(data, read_c), code_len);
+            //printf("code_len: %d line: %s\n", code_len, line);
+            for (j = 0; j < code_len; j++) {
+                temp_c = line[j];
+                num = ((int) temp_c) - 48; //convert char to int
+                write_bit(num, fw);
+                bit_count++;
+            }
+            if (bit_count > (size - bits_remainder)) {
+                //less than 8 bits remaining
+                print_bit(fw);
+            }
         }
-        if (bit_count > (size - bits_remainder)) {
-            //less than 8 bits remaining
-            print_bit(fw);
+        else {
+
         }
+        
     }
-    /*
+    //write the letter frequencies for  the file
     if (fwrite(&letters_size, sizeof(int), 1, fw) != 1) {
         printf("fwrite failed\n");
     }
-    if (fwrite(&letter_array, sizeof(Letter), letters_size, fw) != letters_size) {
+    if (fwrite(letter_array, sizeof(Letter), letters_size, fw) != letters_size) {
         printf("fwrite failed\n");
-    }*/
+    }
     
     fclose(fp);
     fclose(fw);
