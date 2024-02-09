@@ -48,8 +48,10 @@ int main() {
     read_codes(codes, "decode_codes.txt");
 
     printf("String:%s\n", decoded_bits);
-
-    read_binary_string(decoded_bits, root, (in_buffer.data_size * 32) - (32 - in_buffer.last_bit_offset));
+    /*int rets = bitstream_print_size(in_buffer.data_size, in_buffer.last_bit_offset);
+    for (int i = 0; i < rets; i++){
+ 	    printf("%c", decoded_bits[i]);
+    }*/ 
     return 0;
 }
 
