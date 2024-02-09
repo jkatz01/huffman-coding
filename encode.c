@@ -74,14 +74,15 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, Letter 
     while ((read_c = fgetc(fp)) != EOF) {
         read_c = verify_char(read_c);
         if (read_c != 0) {
-            code_len = strlen(get_code(data, read_c));
-            strncat(input_str, get_code(data, read_c), code_len);
-            printf("%s\n", get_code(data, read_c));
-            if (i > (INPUT_SIZE/2)) {
+            if (i >= (INPUT_SIZE)) {
                 INPUT_SIZE = INPUT_SIZE * 2;
+                printf("New input size: %zu\n", INPUT_SIZE);
                 input_str = realloc(input_str, INPUT_SIZE * sizeof(char));
                 printf("New input size: %zu\n", INPUT_SIZE);
             }
+            code_len = strlen(get_code(data, read_c));
+            strncat(input_str, get_code(data, read_c), code_len);
+            printf("%s\n", get_code(data, read_c));
             i++;
         }
         else {
