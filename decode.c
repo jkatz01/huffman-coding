@@ -1,4 +1,5 @@
 #include "huffman.h"
+#include <stdio.h>
 
 //function definitions
 int read_binary_string(char letters[], Node *root, int size);
@@ -11,17 +12,17 @@ int main() {
     fread(&bits_num, sizeof(long), 1, fr);
     fread(&bytes_num, sizeof(long), 1, fr);
     printf("bits: %ld, bytes: %ld\n", bits_num, bytes_num);
-
+    
+    Bitstream in_buffer;
     char* bits_buffer = (char*)malloc(bytes_num);
     fread(&bits_buffer, sizeof(char), bytes_num, fr);
-    //fseek(fr, bytes_num, SEEK_CUR);
-    //printf("hi");
-
     int letter_fr_size;
-    fread(&letter_fr_size, sizeof(int), 1, fr);
-
     Letter *letter_frequencies;
     letter_frequencies = malloc(sizeof(Letter) * letter_fr_size);
+
+    fread(&in_buffer, sizeof(Bitstream), 1, fr);
+    fread(in_buffer.data, sizeof(uint32_t), in_buffer.data_size, fr);
+    fread(&letter_fr_size, sizeof(int), 1, fr);
     if (fread(letter_frequencies, sizeof(Letter), letter_fr_size, fr) != letter_fr_size) {
         printf("Something went wrong");
     }
@@ -44,29 +45,7 @@ int main() {
     create_code_array(codes);
     read_codes(codes, "decode_codes.txt");
 
-
-    /* just testing stuff
-    printf("Example code: %s", codes[5].code);
-    read_binary_string(bits_buffer, root, bits_num);
-    uint8_t test_c = bits_buffer[120];
-    printf("%c %u \n", bits_buffer[120]);
-    char test_str[9] = "";
-    toBinary(test_c, test_str);
-    puts(test_str);
-    */
-
-    char *binary_bits_string = (char *)malloc(bytes_num * 8);
-    char temp_buffer[33];
-    char temp_b_str[9];
-    for (int j = 0; j < bytes_num; j++) {
-        itoa(bits_buffer[j], temp_buffer, 2);
-        memcpy(temp_b_str, &temp_buffer[24], 8); //we need this because itoa returns a 32 bit integer but we want 8 bit
-        strncat(binary_bits_string, temp_b_str, 8);
-    } 
-    
-    printf("%.32s", binary_bits_string);
-    
-    read_binary_string(binary_bits_string, root, bits_num);
+    read_binary_string("TEMPORARY", root, bits_num);
     return 0;
 }
 

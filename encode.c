@@ -106,7 +106,7 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, Letter 
     if (fwrite(&out_buffer, sizeof(Bitstream), 1, fw)!= 1) {
         printf("fwrite bitstream failed\n");
     }
-    if (fwrite(&out_buffer.data[0], sizeof(uint32_t), out_buffer.data_size, fw) != out_buffer.data_size) {
+    if (fwrite(out_buffer.data, sizeof(uint32_t), out_buffer.data_size, fw) != out_buffer.data_size) {
         printf("fwrite bitstream data failed\n");
     }
     //write the letter frequencies for  the file
