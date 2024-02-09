@@ -352,7 +352,7 @@ char *get_code(Code *data, char c) {
         return "fail: letter doesnt exist\n";
     }
     char *temp = data[i].code;
-    //printf("%s\n", temp);
+    //printf("%s\n\n", temp);
     //printf("\n--- char: %c --- code: %s --- strlen: %d\n", c, temp, strlen(temp));
     return temp;
 }
