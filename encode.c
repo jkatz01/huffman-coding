@@ -65,7 +65,7 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, Letter 
 
     printf("Hi\n");
 
-    int i = 0;
+    int bit_count = 0;
     int code_len;
     char read_c;
     char code_buf[32];
@@ -74,7 +74,7 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, Letter 
     while ((read_c = fgetc(fp)) != EOF) {
         read_c = verify_char(read_c);
         if (read_c != 0) {
-            if (i >= (INPUT_SIZE/2)) {
+            if (bit_count >= (INPUT_SIZE/2)) {
                 INPUT_SIZE = INPUT_SIZE * 2;
                 input_str = (char *)realloc(input_str, INPUT_SIZE * sizeof(char));
                 printf("\n\n\nNew input size: %zu\n\n\n", INPUT_SIZE);
@@ -84,28 +84,37 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, Letter 
             if (code_len > 10) {
                 printf("OH nonononononon\n");
             }
-            //printf("%s\n", get_code(data, read_c));
-            i += code_len;
+            bit_count += code_len;
         }
         else {
             //printf("\n");
         }
         
     }
-    input_str[i] = '\0';
+    input_str[bit_count] = '\0';
     
     printf("code: %s\n", input_str);
 
-    //Bitstream out_buffer;
+    Bitstream out_buffer;
     // we're gonna know how much to alloc when we get the binary string
-    //out_buffer.data = (uint32_t *) malloc((sizeof(uint32_t) * infile_size) / 4);
+    // Allocate one uint32 for every 32 bits, + 1 for the remainder (if)
+    out_buffer.data = (uint32_t *) malloc(((bit_count / 32) + 1) * sizeof(uint32_t));
+    write_bitstream(input_str, &out_buffer);
 
+    printf("Num bytes: %zu\n Remainder: %d\n", out_buffer.data_size, out_buffer.last_bit_offset);
+
+    if (fwrite(&out_buffer, sizeof(Bitstream), 1, fw)!= 1) {
+        printf("fwrite bitstream failed\n");
+    }
+    if (fwrite(&out_buffer.data[0], sizeof(uint32_t), out_buffer.data_size, fw) != 1) {
+        printf("fwrite bitstream data failed\n");
+    }
     //write the letter frequencies for  the file
     if (fwrite(&letters_size, sizeof(int), 1, fw) != 1) {
-        printf("fwrite failed\n");
+        printf("fwrite letters size failed\n");
     }
     if (fwrite(letter_array, sizeof(Letter), letters_size, fw) != letters_size) {
-        printf("fwrite failed\n");
+        printf("fwrite letters array failed\n");
     }
     
     fclose(fp);
