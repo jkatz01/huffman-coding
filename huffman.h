@@ -318,9 +318,10 @@ void add_code(Code *data, char c, char *code) {
         printf("Error: incorrect character passed\n");
         return;
     }
-    data[i].code = (char *)malloc(strlen(code));
-    code[strlen(code)-1] = '\0';
-    memcpy(data[i].code, code, strlen(code));
+    data[i].code = (char *)malloc(strlen(code) * sizeof(char));
+    memcpy(data[i].code, code + 2, strlen(code) - 3);
+    data[i].code[strlen(code) - 3] = '\0';
+    printf("Add code: %s\n", data[i].code);
 }
 
 void read_codes(Code *data, char *filename) {
@@ -330,7 +331,7 @@ void read_codes(Code *data, char *filename) {
     char line[32];
     char *ptr;
     while (fgets(line, sizeof(line), fp) != NULL) {
-        ptr = &line[2];
+        ptr = &line[0];
         add_code(data, line[0], ptr);
         //printf("Added char: %c with code: %s\n", line[0], ptr);
     }
@@ -351,6 +352,7 @@ char *get_code(Code *data, char c) {
         return "fail: letter doesnt exist\n";
     }
     char *temp = data[i].code;
+    //printf("%s\n", temp);
     //printf("\n--- char: %c --- code: %s --- strlen: %d\n", c, temp, strlen(temp));
     return temp;
 }

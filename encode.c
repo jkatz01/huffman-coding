@@ -76,14 +76,16 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, Letter 
         if (read_c != 0) {
             code_len = strlen(get_code(data, read_c));
             strncat(input_str, get_code(data, read_c), code_len);
+            printf("%s\n", get_code(data, read_c));
             if (i > (INPUT_SIZE/2)) {
-                INPUT_SIZE *= 2;
-                input_str = realloc(input_str, INPUT_SIZE);
+                INPUT_SIZE = INPUT_SIZE * 2;
+                input_str = realloc(input_str, INPUT_SIZE * sizeof(char));
+                printf("New input size: %zu\n", INPUT_SIZE);
             }
             i++;
         }
         else {
-            printf("\n");
+            //printf("\n");
         }
         
     }
