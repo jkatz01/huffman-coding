@@ -68,9 +68,10 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, Letter 
     int bit_count = 0;
     int code_len;
     char read_c;
-    char code_buf[32];
     size_t INPUT_SIZE = infile_size + 8; //8 for buffer
     char* input_str = (char *) calloc(INPUT_SIZE, sizeof(char));
+    /* Thinking about it now, it was probably the add_codes
+     * that was bugged and not the bit stream... */
     while ((read_c = fgetc(fp)) != EOF) {
         read_c = verify_char(read_c);
         if (read_c != 0) {
@@ -79,6 +80,7 @@ void generate_compressed_file(char *file_in, char *file_out, Code *data, Letter 
                 input_str = (char *)realloc(input_str, INPUT_SIZE * sizeof(char));
                 printf("\n\n\nNew input size: %zu\n\n\n", INPUT_SIZE);
             }
+            // Calling get_code twice is kinda unnecessary...
             code_len = strlen(get_code(data, read_c));
             strncat(input_str, get_code(data, read_c), code_len);
             if (code_len > 10) {

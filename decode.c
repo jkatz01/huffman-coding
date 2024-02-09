@@ -1,4 +1,5 @@
 #include "huffman.h"
+#include <stdint.h>
 #include <stdio.h>
 
 //function definitions
@@ -8,24 +9,25 @@ int main() {
     char buffer[100];
     FILE *fr;
     fr = fopen("output.bin", "rb");
-    long bits_num, bytes_num;
-    fread(&bits_num, sizeof(long), 1, fr);
-    fread(&bytes_num, sizeof(long), 1, fr);
-    printf("bits: %ld, bytes: %ld\n", bits_num, bytes_num);
     
     Bitstream in_buffer;
-    char* bits_buffer = (char*)malloc(bytes_num);
-    fread(&bits_buffer, sizeof(char), bytes_num, fr);
     int letter_fr_size;
     Letter *letter_frequencies;
-    letter_frequencies = malloc(sizeof(Letter) * letter_fr_size);
 
     fread(&in_buffer, sizeof(Bitstream), 1, fr);
-    fread(in_buffer.data, sizeof(uint32_t), in_buffer.data_size, fr);
+    printf("Hi s: %zu  r: %d\n", in_buffer.data_size, in_buffer.last_bit_offset);
+    in_buffer.data = (uint32_t*)malloc(in_buffer.data_size * sizeof(uint32_t));
+    if (fread(in_buffer.data, sizeof(uint32_t), in_buffer.data_size, fr) != in_buffer.data_size) {
+        printf("Failed to read buffer data");
+    }
     fread(&letter_fr_size, sizeof(int), 1, fr);
+    letter_frequencies = malloc(sizeof(Letter) * letter_fr_size);
     if (fread(letter_frequencies, sizeof(Letter), letter_fr_size, fr) != letter_fr_size) {
         printf("Something went wrong");
     }
+    char* decoded_bits = (char*)malloc(in_buffer.data_size * 32);
+    read_bitstream(in_buffer.data, &in_buffer, decoded_bits);
+
     for (int i = 0; i < letter_fr_size; i++) {
         printf("Example Letter: %c freq: %d\n", letter_frequencies[i].letter, letter_frequencies[i].frequency);
     }
@@ -45,7 +47,9 @@ int main() {
     create_code_array(codes);
     read_codes(codes, "decode_codes.txt");
 
-    read_binary_string("TEMPORARY", root, bits_num);
+    printf("String:%s\n", decoded_bits);
+
+    read_binary_string(decoded_bits, root, (in_buffer.data_size * 32) - (32 - in_buffer.last_bit_offset));
     return 0;
 }
 

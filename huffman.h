@@ -400,7 +400,7 @@ int write_bitstream(const char *input_str, Bitstream *out) {
 
     return 0;
 }
-
+// Change input and bstream to const??
 int read_bitstream(uint32_t *input, Bitstream *b_in, char *output) {
    /* Reads a stream of uint32 and converts it 
     * to a string of '0' and '1' */ 
