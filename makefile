@@ -8,4 +8,4 @@ decode: decode.c
 	$(CC) decode.c $(CFLAGS) decode
 
 clean:
-	-del -fR *.exe codes.txt decode_codes.txt frequency.txt output.bin
+	- rm -fR *.exe codes.txt decode_codes.txt frequency.txt output.bin

@@ -12,7 +12,7 @@ int main() {
     fread(&bytes_num, sizeof(long), 1, fr);
     printf("bits: %ld, bytes: %ld\n", bits_num, bytes_num);
 
-    char bits_buffer[bytes_num];
+    char* bits_buffer = (char*)malloc(bytes_num);
     fread(&bits_buffer, sizeof(char), bytes_num, fr);
     //fseek(fr, bytes_num, SEEK_CUR);
     //printf("hi");
@@ -55,7 +55,7 @@ int main() {
     puts(test_str);
     */
 
-    char binary_bits_string[bytes_num * 8];
+    char *binary_bits_string = (char *)malloc(bytes_num * 8);
     char temp_buffer[33];
     char temp_b_str[9];
     for (int j = 0; j < bytes_num; j++) {

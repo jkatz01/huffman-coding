@@ -1,3 +1,4 @@
+#pragma once
 #ifndef HUFFMAN
 #define HUFFMAN
 
@@ -9,60 +10,70 @@
 #include <string.h>
 #include <stdint.h>
 
-#define COMMA 44
-#define PERIOD 46
-#define SIZE 39
-#define CODESIZE 16
-#define BIT_BUFFER_SIZE sizeof(bit_buffer) * 8
-#define BIT_BUFFER_SIZE_1 BIT_BUFFER_SIZE - 1
+#define COMMA           44
+#define PERIOD          46
+#define SIZE            39
+#define CODESIZE        16
+#define BIT_BUFFER_SIZE	32
+#define ASCII_ZERO	48
+
+#define _CRT_SECURE_NO_WARNINGS
 
 typedef struct letter {
-    char letter;
-    int frequency;
+    char    letter;
+    int     frequency;
 } Letter;
 
 typedef struct code {
-    char letter;
-    char *code;
+    char    letter;
+    char    *code;
 } Code;
 
 typedef struct node {
-    char letter;
-    int frequency;
-    struct node *left;
-    struct node *right;
+    char    letter;
+    int     frequency;
+    struct  node *left;
+    struct  node *right;
 } Node;
 
 typedef struct minheap {
-    int size;
-    int capacity;
-    Node **nodes;
+    int     size;
+    int     capacity;
+    Node    **nodes;
 } MinHeap;
 
+typedef struct bitstream {
+    /*Must allocate (string size / BUFSIZE) memory for data	*/
+    size_t 	  data_size; // size of data
+    int 	  last_bit_offset;
+    uint32_t* data;
+} Bitstream;
+
 // Function definitions
-void read_file(char *filename, Letter *data);
-void add_letter(Letter *data, char c);
-void create_letter_array(Letter *data);
-void write_file(char *filename, Letter *data, int size);
-char verify_char(char c);
-void read_frequencies(char *filename);
-//codes
-Node *new_node(char let, int freq);
-MinHeap *new_heap(int cap);
-void swap_nodes (Node **a, Node **b);
-void heapify(MinHeap *hp, int index);
-Node *extract_min(MinHeap *hp);
-void insert(MinHeap *hp, Node *n);
-int leaf_node (Node *root);
-void build_heap(MinHeap *hp);
-MinHeap *create_heap(Letter data[], int size);
-Node *build_huff_tree(Letter data[], int size);
-void print_codes(FILE *fp, Node *root, int codes[], int start);
-//encoding
-void create_code_array(Code *data);
-void add_code(Code *data, char c, char *code);
-void read_codes(Code *data, char *filename);
-char *get_code(Code *data, char c);
+void        read_file(char *filename, Letter *data);
+void        add_letter(Letter *data, char c);
+void        create_letter_array(Letter *data);
+void        write_file(char *filename, Letter *data, int size);
+char        verify_char(char c);
+void        read_frequencies(char *filename);
+Node        *new_node(char let, int freq);
+MinHeap     *new_heap(int cap);
+void        swap_nodes (Node **a, Node **b);
+void        heapify(MinHeap *hp, int index);
+Node        *extract_min(MinHeap *hp);
+void        insert(MinHeap *hp, Node *n);
+int         leaf_node (Node *root);
+void        build_heap(MinHeap *hp);
+MinHeap     *create_heap(Letter data[], int size);
+Node        *build_huff_tree(Letter data[], int size);
+void        print_codes(FILE *fp, Node *root, int codes[], int start);
+void        create_code_array(Code *data);
+void        add_code(Code *data, char c, char *code);
+void        read_codes(Code *data, char *filename);
+char        *get_code(Code *data, char c);
+int         write_bitstream(const char* input_str, Bitstream* out);
+int         read_bitstream(uint32_t* input, Bitstream* b_in, char* output);
+int         bitstream_print_size(size_t bytes, int remainder);
 
 void read_file(char *filename, Letter *data) {
     FILE *fp;
@@ -246,7 +257,7 @@ Node *build_huff_tree(Letter data[], int size) {
     //we need to create a heap and populate it 
     MinHeap *hp = create_heap(data, size);
     //we need these nodes to create the huffman tree from the heap
-    Node *left, *right, *parent;
+    Node    *left, *right, *parent;
 
     //extract (and delete) two minimum letters from the heap
     //and make them left/right of a new internal node
@@ -281,8 +292,9 @@ void print_codes(FILE *fp, Node *root, int codes[], int start) {
         fprintf(fp, "%c:", root->letter);
         //print_array(codes, start);
         int i;
-        for (i = 0; i < start; ++i)
-        fprintf(fp, "%d", codes[i]);
+        for (i = 0; i < start; ++i) {
+            fprintf(fp, "%d", codes[i]);
+        }
         fprintf(fp, "\n");
     }
 }
@@ -306,7 +318,7 @@ void add_code(Code *data, char c, char *code) {
         printf("Error: incorrect character passed\n");
         return;
     }
-    data[i].code = malloc(strlen(code));
+    data[i].code = (char *)malloc(strlen(code));
     code[strlen(code)-1] = '\0';
     memcpy(data[i].code, code, strlen(code));
 }
@@ -341,6 +353,70 @@ char *get_code(Code *data, char c) {
     char *temp = data[i].code;
     //printf("\n--- char: %c --- code: %s --- strlen: %d\n", c, temp, strlen(temp));
     return temp;
+}
+
+int write_bitstream(const char *input_str, Bitstream *out) {
+    /* Writes a string of '0' and '1' to 
+    *  out.data as a uint32 bitstream 
+    *  The bytes it rights are reversed */
+
+    // implement offset, to write starting at [offset]
+
+    uint32_t byte_buffer = 0;
+    int n_bytes = 0;
+    int n_bits = 0;
+    uint32_t digit;
+    int i = 0;
+    while (input_str[i] != '\0') {
+        digit  = ((int) input_str[i]) - ASCII_ZERO;
+        if (digit != 0 && digit != 1) {
+            return -1;
+        }
+
+        byte_buffer |= digit << (BIT_BUFFER_SIZE - n_bits);
+        
+        n_bits++;
+        if (n_bits % BIT_BUFFER_SIZE == 0) {
+                out->data[n_bytes] = byte_buffer;
+                n_bytes++;
+                byte_buffer = 0;
+                n_bits = 0;
+        }
+        i++;
+
+    }
+
+    if (i % BIT_BUFFER_SIZE != 0) {
+        out->data[n_bytes] = byte_buffer;
+        n_bytes++;
+        byte_buffer = 0;
+        n_bits = 0;
+    }
+
+    out->last_bit_offset = (i % BIT_BUFFER_SIZE);
+    out->data_size = n_bytes;
+
+    return 0;
+}
+
+int read_bitstream(uint32_t *input, Bitstream *b_in, char *output) {
+   /* Reads a stream of uint32 and converts it 
+    * to a string of '0' and '1' */ 
+    
+    int count = 0;
+    for (int i = 0; i < b_in->data_size; i++) {
+        for (int j = BIT_BUFFER_SIZE; j > 0; j--) {
+            int temp = ((b_in->data[i] >> j) & 0x01);
+            output[count] = (char)temp + ASCII_ZERO;
+            count++;
+        }
+    }
+    output[count] = '\0';
+    return 0;
+}
+
+int bitstream_print_size(size_t bytes, int remainder) {
+    return ((bytes - 1) * 32) + remainder;
 }
 
 #endif
